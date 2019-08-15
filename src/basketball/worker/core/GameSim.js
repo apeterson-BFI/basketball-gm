@@ -137,7 +137,7 @@ const pickPlayer = (
  * @return {number} Fatigue, from 0 to 1 (0 = lots of fatigue, 1 = none).
  */
 const fatigue = (energy: number): number => {
-    energy += 0.05;
+    energy += 0.005;
     if (energy > 1) {
         energy = 1;
     }
@@ -358,9 +358,18 @@ class GameSim {
             }
             quarter += 1;
 
-            if (quarter === 5) {
+            if (quarter === 21) {
                 break;
             }
+
+            if (this.team[0].stat["tp"] > 0) {
+                break;
+            }
+
+            if (this.team[1].stat["tp"] > 0) {
+                break;
+            }
+
             this.team[0].stat.ptsQtrs.push(0);
             this.team[1].stat.ptsQtrs.push(0);
             this.t = g.quarterLength;
@@ -930,9 +939,9 @@ class GameSim {
         ) {
             // Three pointer
             type = "threePointer";
-            probMissAndFoul = 0.02;
-            probMake = shootingThreePointerScaled * 0.3 + 0.36;
-            probAndOne = 0.01;
+            probMissAndFoul = 0.0;
+            probMake = shootingThreePointerScaled * 0.07 + 0.084;
+            probAndOne = 0.0;
         } else {
             const r1 =
                 0.8 *
@@ -953,32 +962,32 @@ class GameSim {
             if (r1 > r2 && r1 > r3) {
                 // Two point jumper
                 type = "midRange";
-                probMissAndFoul = 0.07;
+                probMissAndFoul = 0.035;
                 probMake =
                     this.team[this.o].player[p].compositeRating
                         .shootingMidRange *
-                        0.32 +
-                    0.32;
-                probAndOne = 0.05;
+                        0.16 +
+                    0.16;
+                probAndOne = 0.025;
             } else if (r2 > r3) {
                 // Dunk, fast break or half court
                 type = "atRim";
-                probMissAndFoul = 0.37;
+                probMissAndFoul = 0.185;
                 probMake =
                     this.team[this.o].player[p].compositeRating.shootingAtRim *
-                        0.32 +
-                    0.52;
-                probAndOne = 0.25;
+                        0.16 +
+                    0.26;
+                probAndOne = 0.125;
             } else {
                 // Post up
                 type = "lowPost";
-                probMissAndFoul = 0.33;
+                probMissAndFoul = 0.165;
                 probMake =
                     this.team[this.o].player[p].compositeRating
                         .shootingLowPost *
-                        0.32 +
-                    0.37;
-                probAndOne = 0.15;
+                        0.16 +
+                    0.185;
+                probAndOne = 0.075;
             }
         }
 
@@ -1126,7 +1135,7 @@ class GameSim {
         const p = this.playersOnCourt[this.o][shooter];
         this.recordStat(this.o, p, "fga");
         this.recordStat(this.o, p, "fg");
-        this.recordStat(this.o, p, "pts", 2); // 2 points for 2's
+        this.recordStat(this.o, p, "pts", 10); // 10 points for goals
         if (type === "atRim") {
             this.recordStat(this.o, p, "fgaAtRim");
             this.recordStat(this.o, p, "fgAtRim");
@@ -1148,9 +1157,10 @@ class GameSim {
                 [this.team[this.o].player[p].name],
             );
         } else if (type === "threePointer") {
-            this.recordStat(this.o, p, "pts"); // Extra point for 3's
+            this.recordStat(this.o, p, "pts", 140); // 150 (net +140 for Snitch)
             this.recordStat(this.o, p, "tpa");
             this.recordStat(this.o, p, "tp");
+            this.t = 0; // quarter over, game over
             this.recordPlay(andOne ? "tpAndOne" : "tp", this.o, [
                 this.team[this.o].player[p].name,
             ]);
@@ -1419,7 +1429,7 @@ class GameSim {
             if (Math.random() < ftp) {
                 // Between 60% and 90%
                 this.recordStat(this.o, p, "ft");
-                this.recordStat(this.o, p, "pts");
+                this.recordStat(this.o, p, "pts", 5);
                 this.recordPlay("ft", this.o, [
                     this.team[this.o].player[p].name,
                 ]);

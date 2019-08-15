@@ -21,49 +21,45 @@ const calculatePER = (players, teams, league) => {
     for (let i = 0; i < players.length; i++) {
         const tid = players[i].tid;
 
-        const factor =
-            2 / 3 -
-            (0.5 * (league.ast / league.fg)) / (2 * (league.fg / league.ft));
-        const vop =
-            league.pts /
-            (league.fga - league.orb + league.tov + 0.44 * league.fta);
-        const drbp = (league.trb - league.orb) / league.trb; // DRB%
+        let ThreePct = players[i].stats.tp / players[i].stats.fga;
+        let TwoPct =
+            (players[i].stats.fg - players[i].stats.tp) / players[i].stats.fga;
+        let FTPct = players[i].stats.fta / players[i].stats.fga;
+        let BPct = players[i].stats.blk / (0.284 * players[i].stats.min);
+        let SPct = players[i].stats.stl / (0.284 * players[i].stats.min);
+        let ORBR = players[i].stats.orb / players[i].stats.min;
+        let DRBR = players[i].stats.drb / players[i].stats.min;
+
+        if (players[i].stats.min === 0) {
+            BPct = 0;
+            SPct = 0;
+            ORBR = 0;
+            DRBR = 0;
+        }
+
+        if (players[i].stats.fga === 0) {
+            ThreePct = 0;
+            TwoPct = 0;
+            FTPct = 0;
+        }
 
         let uPER;
+
         if (players[i].stats.min > 0) {
             uPER =
-                (1 / players[i].stats.min) *
-                (players[i].stats.tp +
-                    (2 / 3) * players[i].stats.ast +
-                    (2 -
-                        factor * (teams[tid].stats.ast / teams[tid].stats.fg)) *
-                        players[i].stats.fg +
-                    players[i].stats.ft *
-                        0.5 *
-                        (1 +
-                            (1 - teams[tid].stats.ast / teams[tid].stats.fg) +
-                            (2 / 3) *
-                                (teams[tid].stats.ast / teams[tid].stats.fg)) -
-                    vop * players[i].stats.tov -
-                    vop * drbp * (players[i].stats.fga - players[i].stats.fg) -
-                    vop *
-                        0.44 *
-                        (0.44 + 0.56 * drbp) *
-                        (players[i].stats.fta - players[i].stats.ft) +
-                    vop *
-                        (1 - drbp) *
-                        (players[i].stats.trb - players[i].stats.orb) +
-                    vop * drbp * players[i].stats.orb +
-                    vop * players[i].stats.stl +
-                    vop * drbp * players[i].stats.blk -
-                    players[i].stats.pf *
-                        (league.ft / league.pf -
-                            0.44 * (league.fta / league.pf) * vop));
+                -50 +
+                22000 * ThreePct +
+                1000 * TwoPct +
+                480 * FTPct +
+                360 * BPct +
+                460 * SPct +
+                530 * ORBR +
+                260 * DRBR;
         } else {
             uPER = 0;
         }
 
-        aPER[i] = teams[tid].stats.paceAdj * uPER;
+        aPER[i] = uPER;
         league.aPER += aPER[i] * players[i].stats.min;
 
         mins[i] = players[i].stats.min; // Save for EWA calculation
